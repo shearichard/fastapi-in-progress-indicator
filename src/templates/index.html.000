@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTMX Modal Example</title>
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <style>
+        /* Basic styles for the modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<button id="start-process" hx-post="/process" hx-target="#modal-content" hx-trigger="click" hx-swap="innerHTML" hx-on="htmx:request:start: showSpinner, htmx:request:end: hideSpinner">Start Process</button>
+
+<div id="modal" class="modal" hx-target="this" hx-swap="innerHTML">
+    <div class="modal-content" id="modal-content">
+        <h2>Processing...</h2>
+        <div class="spinner" id="spinner">Loading...</div>
+        <div id="message"></div>
+        <button id="close-modal" style="display:none;" onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<script>
+    function showSpinner() {
+        document.getElementById('spinner').style.display = 'block';
+        document.getElementById('message').innerHTML = '';
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function hideSpinner() {
+        // This will be handled by HTMX when the request completes
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    document.addEventListener('htmx:afterSwap', (event) => {
+        const response = event.detail.xhr.response;
+        const data = JSON.parse(response);
+        const messageDiv = document.getElementById('message');
+        const closeButton = document.getElementById('close-modal');
+
+        if (data.status === 'success') {
+            messageDiv.innerHTML = `<p style="color: green;">${data.message}</p>`;
+        } else {
+            messageDiv.innerHTML = `<p style="color: red;">${data.message}</p>`;
+        }
+
+        // Show the close button after the process is complete
+        closeButton.style.display = 'block';
+        document.getElementById('spinner').style.display = 'none';
+    });
+</script>
+
+</body>
+</html>
+
